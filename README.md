@@ -52,6 +52,8 @@ This repo is configured as a single Flask app deployed through Vercel's Python r
 
 The app should work without extra runtime environment variables. The data-processing scripts still expect local tooling and are not part of the deployed runtime.
 
+For deployment, the active GeoJSON outputs in `data/processed/` must stay committed so Vercel can bundle the GIS layers that the Flask API reads at request time.
+
 ## Data policy
 
 - Authoritative datasets should be documented in `metadata/data_sources.csv` before use.

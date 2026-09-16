@@ -9,4 +9,8 @@ output/geojson/**
 !data/raw/.gitkeep
 !data/raw/verified_healthcare_facilities_template.csv
 !data/processed/.gitkeep
+!data/processed/liberty_hill_acs_block_groups.geojson
+!data/processed/liberty_hill_healthcare_accessibility.geojson
+!data/processed/liberty_hill_healthcare_facilities.geojson
+!data/processed/liberty_hill_roads.geojson
 !output/geojson/.gitkeep
