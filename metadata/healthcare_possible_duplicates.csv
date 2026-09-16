@@ -1,0 +1,3 @@
+left_facility_id,right_facility_id,left_facility_name,right_facility_name,reason
+carefirst-libertyhill-primary,carefirst-libertyhill-urgent,Care First Clinic,Care First Clinic,Same normalized street address
+stdavids-georgetown-hospital,stdavids-georgetown-emergency,St. David's Georgetown Hospital,St. David's Georgetown Hospital Emergency Department,Same normalized street address

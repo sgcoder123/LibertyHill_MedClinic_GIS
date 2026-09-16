@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+
+data/raw/**
+data/processed/**
+output/geojson/**
+
+!data/raw/.gitkeep
+!data/raw/verified_healthcare_facilities_template.csv
+!data/processed/.gitkeep
+!output/geojson/.gitkeep

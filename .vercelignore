@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+data/raw/**
+output/geojson/**
+scripts/**
+metadata/*.csv
+metadata/*.json

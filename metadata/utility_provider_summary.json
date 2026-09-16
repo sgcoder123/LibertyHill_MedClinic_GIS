@@ -1,0 +1,15 @@
+{
+  "date_built": "2026-09-16",
+  "total_utility_providers": 3,
+  "providers_within_five_miles": 1,
+  "providers_within_ten_miles": 2,
+  "counts_by_utility_type": {
+    "water": 2,
+    "water_wastewater": 1
+  },
+  "provider_names": [
+    "City of Liberty Hill Utility Billing",
+    "City of Georgetown Customer Care",
+    "City of Leander Utilities"
+  ]
+}

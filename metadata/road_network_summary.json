@@ -1,0 +1,20 @@
+{
+  "date_built": "2026-09-16",
+  "study_radius_miles": 10.0,
+  "total_segments": 3363,
+  "major_corridor_segments": 30,
+  "total_centerline_miles": 1355.79,
+  "major_corridor_miles": 178.85,
+  "counts_by_road_class": {
+    "Local Neighborhood Road": 3208,
+    "Private Road": 95,
+    "Ramp": 20,
+    "Secondary Road": 19,
+    "Internal Through Road": 8,
+    "Service Drive": 6,
+    "Parking Lot Road": 3,
+    "Primary Road": 2,
+    "Vehicular Trail": 1,
+    "Alley": 1
+  }
+}

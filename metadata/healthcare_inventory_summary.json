@@ -1,0 +1,32 @@
+{
+  "date_built": "2026-09-15",
+  "study_radius_miles": 10.0,
+  "raw_facility_records": 13,
+  "total_facilities": 9,
+  "excluded_beyond_study_radius": 4,
+  "counts_by_type": {
+    "primary_care": 5,
+    "urgent_care": 3,
+    "hospital": 0,
+    "emergency_department": 1,
+    "specialty_clinic": 0,
+    "pharmacy": 0
+  },
+  "counts_within_distance_bands": {
+    "within_1_mile": 3,
+    "within_3_miles": 5,
+    "within_5_miles": 6,
+    "within_10_miles": 9
+  },
+  "counts_by_status": {
+    "Verified Current": 8,
+    "Rebranded": 1
+  },
+  "removed_exact_duplicates": 0,
+  "possible_duplicates_flagged": 2,
+  "manual_verification_required": 1,
+  "drive_time_available": false,
+  "accessibility_summary": {
+    "block_groups": 77
+  }
+}

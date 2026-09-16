@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Liberty Hill Medical Clinic GIS</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    >
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="panel brand-panel">
+          <p class="eyebrow">University GIS Project</p>
+          <h1>Liberty Hill Medical Clinic Suitability</h1>
+          <p class="lede">
+            Interactive analysis of the SH 29 / US 183 area using demographics,
+            healthcare access, transportation, infrastructure, development, and constraints.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Layers</h2>
+            <span class="status-chip">Phase 4</span>
+          </div>
+          <ul class="layer-list">
+            <li><label><input type="checkbox" data-layer="study-location" checked> Proposed clinic study location</label></li>
+            <li><label><input type="checkbox" data-layer="study-5" checked> 5-mile study area</label></li>
+            <li><label><input type="checkbox" data-layer="study-10" checked> 10-mile study area</label></li>
+            <li><label><input type="checkbox" disabled> City boundary</label></li>
+            <li><label><input type="checkbox" disabled> ETJ</label></li>
+            <li><label><input id="acs-layer-toggle" type="checkbox" data-layer="acs-block-groups"> ACS Block Groups</label></li>
+            <li><label><input id="healthcare-accessibility-toggle" type="checkbox" data-layer="healthcare-accessibility"> Healthcare Accessibility</label></li>
+            <li><label><input id="healthcare-all-toggle" type="checkbox" data-layer="healthcare-all" disabled> Healthcare Facilities</label></li>
+            <li><label><input id="healthcare-primary-toggle" type="checkbox" data-layer="healthcare-primary" disabled> Primary Care</label></li>
+            <li><label><input id="healthcare-urgent-toggle" type="checkbox" data-layer="healthcare-urgent" disabled> Urgent Care</label></li>
+            <li><label><input id="healthcare-hospital-toggle" type="checkbox" data-layer="healthcare-hospital" disabled> Hospitals</label></li>
+            <li><label><input id="healthcare-emergency-toggle" type="checkbox" data-layer="healthcare-emergency" disabled> Emergency Departments</label></li>
+            <li><label><input id="healthcare-specialty-toggle" type="checkbox" data-layer="healthcare-specialty" disabled> Specialty Clinics</label></li>
+            <li><label><input id="healthcare-pharmacy-toggle" type="checkbox" data-layer="healthcare-pharmacy" disabled> Pharmacies</label></li>
+            <li><label><input id="road-network-toggle" type="checkbox" data-layer="road-network"> Transportation Network</label></li>
+            <li><label><input type="checkbox" disabled> Development activity</label></li>
+            <li><label><input type="checkbox" disabled> Environmental constraints</label></li>
+            <li><label><input type="checkbox" disabled> Suitability score</label></li>
+          </ul>
+          <div class="control-stack">
+            <label class="control-label" for="acs-metric-select">ACS thematic display</label>
+            <select id="acs-metric-select" disabled>
+              <option value="population_density">Population density</option>
+              <option value="uninsured_pct">Uninsured percentage</option>
+              <option value="poverty_pct">Poverty percentage</option>
+              <option value="disability_pct">Disability percentage</option>
+              <option value="healthcare_need_score">Healthcare need score</option>
+            </select>
+            <label class="control-label" for="healthcare-accessibility-select">Healthcare accessibility display</label>
+            <select id="healthcare-accessibility-select" disabled>
+              <option value="nearest_any_medical_miles">Nearest medical facility</option>
+              <option value="nearest_primary_care_miles">Nearest primary care</option>
+              <option value="nearest_urgent_care_miles">Nearest urgent care</option>
+              <option value="nearest_emergency_miles">Nearest emergency department</option>
+            </select>
+            <p id="road-network-status" class="small-copy">Awaiting transportation network output.</p>
+            <p id="acs-status" class="small-copy">Awaiting ACS download and processing.</p>
+            <p id="healthcare-status" class="small-copy">Awaiting verified healthcare facility inventory.</p>
+            <p id="healthcare-accessibility-status" class="small-copy">Awaiting healthcare accessibility output.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Methodology</h2>
+            <button id="methodology-toggle" class="secondary-button" type="button">Open</button>
+          </div>
+          <p class="small-copy">
+            The final suitability model will remain transparent. Each factor, weight, normalization rule,
+            data source, and limitation will be documented before scoring is displayed.
+          </p>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <section class="dashboard" id="dashboard"></section>
+        <section class="map-panel">
+          <div id="map"></div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="methodology-dialog">
+      <div class="dialog-body">
+        <h2>Methodology</h2>
+        <p>
+          The ACS block-group workflow uses 2024 ACS 5-Year estimates joined to 2024 TIGER/Line
+          block-group boundaries. Derived percentages document the numerator and denominator used,
+          and the healthcare-need score is a transparent relative index rather than a proof of need.
+        </p>
+        <ol>
+          <li>Document each source in the metadata catalog.</li>
+          <li>Retrieve official ACS estimates and margins of error through the Census API.</li>
+          <li>Join ACS rows to 2024 TIGER/Line block-group boundaries using GEOID.</li>
+          <li>Normalize selected healthcare-need indicators to a 0 to 100 relative index.</li>
+          <li>Apply configurable weights later for the full suitability model.</li>
+        </ol>
+        <button id="methodology-close" class="primary-button" type="button">Close</button>
+      </div>
+    </dialog>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>
