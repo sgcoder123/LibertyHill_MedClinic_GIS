@@ -130,8 +130,12 @@ function buildDashboard(quickfacts) {
   addDashboardCard(container, "Liberty Hill 2025 Population", formatInteger(quickfacts.population_2025), "QuickFacts contextual city estimate");
   addDashboardCard(container, "Growth Since 2020", formatPercent(quickfacts.growth_2020_2025_pct), `2020 Census base: ${formatInteger(quickfacts.population_2020)}`);
   addDashboardCard(container, "Under 18", formatPercent(quickfacts.under_18_pct), "Indicates pediatric and family care demand");
-  addDashboardCard(container, "Uninsured Under 65", formatPercent(quickfacts.uninsured_under_65_pct), "Highlights healthcare access pressure");
-  addDashboardCard(container, "Median Household Income", `$${formatInteger(quickfacts.median_household_income)}`, "City-level context only");
+  addDashboardCard(
+    container,
+    "Age 65+ / Health Issues",
+    `${formatPercent(quickfacts.age_65_plus_pct)} / ${formatPercent(quickfacts.disability_under_65_pct)}`,
+    "QuickFacts context for older adults and disability-related health burden"
+  );
 }
 
 function registerLayer(name, layer) {
@@ -453,7 +457,6 @@ async function loadHealthcareLayers(map, layerConfig) {
   if (statusElement) {
     statusElement.textContent = `Loaded ${summary.total} healthcare facilities; ${summary.withinFiveMiles} are within 5 straight-line miles of the proposed site.`;
   }
-  upsertDashboardCard("healthcare-facilities-card", "Healthcare Facilities", formatInteger(summary.total), `${formatInteger(summary.withinFiveMiles)} within 5 straight-line miles`);
 }
 
 function summarizeHealthcareAccessibility(features) {
@@ -562,12 +565,6 @@ async function loadRoadNetworkLayer(map, layerConfig) {
   if (statusElement) {
     statusElement.textContent = `Loaded ${formatInteger(summary.totalSegments)} road segments, including ${formatInteger(summary.majorSegments)} major-corridor segments.`;
   }
-  upsertDashboardCard(
-    "road-network-card",
-    "Transportation Network",
-    `${summary.totalMiles.toFixed(1)} mi`,
-    `${summary.majorMiles.toFixed(1)} miles are classified as major corridors`
-  );
   if (toggle.checked) {
     roadNetworkLayer.addTo(map);
   }
