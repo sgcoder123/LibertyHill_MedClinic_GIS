@@ -33,8 +33,6 @@
             <li><label><input type="checkbox" data-layer="study-location" checked> Proposed clinic study location</label></li>
             <li><label><input type="checkbox" data-layer="study-5" checked> 5-mile study area</label></li>
             <li><label><input type="checkbox" data-layer="study-10" checked> 10-mile study area</label></li>
-            <li><label><input id="city-boundary-toggle" type="checkbox" data-layer="city-boundary"> City boundary</label></li>
-            <li><label><input type="checkbox" disabled> ETJ</label></li>
             <li><label><input id="acs-layer-toggle" type="checkbox" data-layer="acs-block-groups"> ACS Block Groups</label></li>
             <li><label><input id="healthcare-accessibility-toggle" type="checkbox" data-layer="healthcare-accessibility"> Healthcare Accessibility</label></li>
             <li><label><input id="healthcare-all-toggle" type="checkbox" data-layer="healthcare-all" disabled> Healthcare Facilities</label></li>
@@ -85,6 +83,12 @@
         <section class="dashboard" id="dashboard"></section>
         <section class="map-panel">
           <div id="map"></div>
+        </section>
+        <section class="panel sources-panel">
+          <div class="panel-header">
+            <h2>Key Sources</h2>
+          </div>
+          <div class="sources-content">{{ key_sources_html|safe }}</div>
         </section>
       </main>
     </div>

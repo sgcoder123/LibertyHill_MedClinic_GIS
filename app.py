@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html
 import json
+import re
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
@@ -67,7 +69,62 @@ ACS_BLOCK_GROUPS_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_acs_bloc
 HEALTHCARE_FACILITIES_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_healthcare_facilities.geojson"
 HEALTHCARE_ACCESSIBILITY_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_healthcare_accessibility.geojson"
 ROAD_NETWORK_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_roads.geojson"
-CITY_BOUNDARY_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_city_boundary.geojson"
+KEY_SOURCES_PATH = BASE_DIR / "metadata" / "key_sources.md"
+
+INLINE_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+PLAIN_URL_PATTERN = re.compile(r"(https?://[^\s<]+)")
+
+
+def format_inline_markdown(text: str) -> str:
+    escaped = html.escape(text)
+    escaped = INLINE_LINK_PATTERN.sub(r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>', escaped)
+    return PLAIN_URL_PATTERN.sub(r'<a href="\1" target="_blank" rel="noopener noreferrer">\1</a>', escaped)
+
+
+def render_key_sources_html() -> str:
+    if not KEY_SOURCES_PATH.exists():
+        return "<p class=\"small-copy\">Key source register is not available yet.</p>"
+
+    parts: list[str] = []
+    in_list = False
+    for raw_line in KEY_SOURCES_PATH.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line:
+            if in_list:
+                parts.append("</ul>")
+                in_list = False
+            continue
+        if line.startswith("### "):
+            if in_list:
+                parts.append("</ul>")
+                in_list = False
+            parts.append(f"<h4>{format_inline_markdown(line[4:])}</h4>")
+            continue
+        if line.startswith("## "):
+            if in_list:
+                parts.append("</ul>")
+                in_list = False
+            parts.append(f"<h3>{format_inline_markdown(line[3:])}</h3>")
+            continue
+        if line.startswith("# "):
+            if in_list:
+                parts.append("</ul>")
+                in_list = False
+            parts.append(f"<h2>{format_inline_markdown(line[2:])}</h2>")
+            continue
+        if line.startswith("- "):
+            if not in_list:
+                parts.append("<ul>")
+                in_list = True
+            parts.append(f"<li>{format_inline_markdown(line[2:])}</li>")
+            continue
+        if in_list:
+            parts.append("</ul>")
+            in_list = False
+        parts.append(f"<p>{format_inline_markdown(line)}</p>")
+    if in_list:
+        parts.append("</ul>")
+    return "".join(parts)
 
 
 def create_app() -> Flask:
@@ -75,7 +132,7 @@ def create_app() -> Flask:
 
     @app.get("/")
     def index() -> str:
-        return render_template("index.html")
+        return render_template("index.html", key_sources_html=render_key_sources_html())
 
     @app.get("/api/bootstrap")
     def bootstrap() -> tuple[dict, int]:
@@ -101,10 +158,6 @@ def create_app() -> Flask:
                         "road_network": {
                             "available": ROAD_NETWORK_PATH.exists(),
                             "endpoint": "/api/layers/road-network",
-                        },
-                        "city_boundary": {
-                            "available": CITY_BOUNDARY_PATH.exists(),
-                            "endpoint": "/api/layers/city-boundary",
                         }
                     },
                 }
@@ -171,21 +224,6 @@ def create_app() -> Flask:
             )
 
         return (jsonify(json.loads(ROAD_NETWORK_PATH.read_text(encoding="utf-8"))), 200)
-
-    @app.get("/api/layers/city-boundary")
-    def city_boundary() -> tuple[dict, int]:
-        if not CITY_BOUNDARY_PATH.exists():
-            return (
-                jsonify(
-                    {
-                        "error": "City boundary layer is not available yet.",
-                        "expected_path": str(CITY_BOUNDARY_PATH),
-                    }
-                ),
-                404,
-            )
-
-        return (jsonify(json.loads(CITY_BOUNDARY_PATH.read_text(encoding="utf-8"))), 200)
 
     return app
 

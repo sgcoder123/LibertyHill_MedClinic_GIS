@@ -207,6 +207,41 @@ select {
   overflow: hidden;
 }
 
+.sources-panel {
+  margin: 0 20px 20px;
+  padding: 20px;
+}
+
+.sources-content {
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.sources-content h2,
+.sources-content h3,
+.sources-content h4 {
+  color: var(--ink);
+  margin-bottom: 0;
+}
+
+.sources-content p,
+.sources-content ul {
+  margin: 0;
+}
+
+.sources-content ul {
+  padding-left: 20px;
+}
+
+.sources-content li {
+  margin-bottom: 6px;
+}
+
+.sources-content a {
+  color: var(--accent);
+}
+
 #map {
   min-height: calc(100vh - 148px);
 }
