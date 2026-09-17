@@ -25,6 +25,11 @@ POSSIBLE_DUPLICATES_PATH = Path("metadata/healthcare_possible_duplicates.csv")
 MANUAL_VERIFICATION_PATH = Path("metadata/healthcare_manual_verification.csv")
 SUMMARY_PATH = Path("metadata/healthcare_inventory_summary.json")
 
+ALWAYS_INCLUDE_FACILITY_IDS = {
+    "ascension-seton-cedarpark-hospital",
+    "stdavids-georgetown-hospital",
+}
+
 PROPOSED_SITE_LATITUDE = 30.6521666667
 PROPOSED_SITE_LONGITUDE = -97.8797222222
 STUDY_RADIUS_MILES = 10.0
@@ -327,8 +332,10 @@ def calculate_site_distances(geodata: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def filter_to_study_radius(geodata: gpd.GeoDataFrame) -> tuple[gpd.GeoDataFrame, pd.DataFrame]:
-    within_radius = geodata.loc[geodata["distance_from_proposed_site_miles"] <= STUDY_RADIUS_MILES].copy()
-    excluded = geodata.loc[geodata["distance_from_proposed_site_miles"] > STUDY_RADIUS_MILES].copy()
+    include_mask = geodata["distance_from_proposed_site_miles"] <= STUDY_RADIUS_MILES
+    include_mask = include_mask | geodata["facility_id"].isin(ALWAYS_INCLUDE_FACILITY_IDS)
+    within_radius = geodata.loc[include_mask].copy()
+    excluded = geodata.loc[~include_mask].copy()
     return within_radius, excluded
 
 

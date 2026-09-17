@@ -62,10 +62,12 @@
 - Care First Clinic: https://www.carefirstclinic.com/
 - Austin Regional Clinic Liberty Hill: https://www.austinregionalclinic.com/clinics/liberty-hill
 - Austin Regional Clinic Leander: https://www.austinregionalclinic.com/clinics/leander
+- Ascension Seton Cedar Park Hospital: https://healthcare.ascension.org/locations/texas/txaus/cedar-park-ascension-seton-cedar-park-hospital
 - Baylor Scott & White Clinic - Leander: https://www.bswhealth.com/locations/clinic/leander
 - CareNow Urgent Care - Liberty Hill: https://www.carenow.com/locations/austin/liberty-hill
 - CareNow Urgent Care - Leander: https://www.carenow.com/locations/austin/leander
 - St. David's Emergency Center - Leander: https://www.stdavids.com/locations/st-davids-emergency-center-leander
+- St. David's Georgetown Hospital: https://www.stdavids.com/locations/st-davids-georgetown-hospital
 - Baylor Scott & White Clinic - Georgetown: https://www.bswhealth.com/locations/clinic/georgetown
 - Additional provider URLs may appear in the supporting register as more verified facilities are added.
 
@@ -80,6 +82,7 @@
 
 - Derived from: [data/processed/liberty_hill_healthcare_facilities.geojson](/Users/saig/LibertyHill_MedClinic_GIS/data/processed/liberty_hill_healthcare_facilities.geojson) and [data/processed/liberty_hill_acs_block_groups.geojson](/Users/saig/LibertyHill_MedClinic_GIS/data/processed/liberty_hill_acs_block_groups.geojson)
 - Used for: Block-group nearest-facility distance fields shown in the healthcare accessibility layer
+- Scope note: Two named hospital records may remain in the facility and accessibility outputs for regional comparison even when they fall beyond the default 10-mile study radius.
 - Limitations: Current access values are straight-line distances, not drive-time or network-travel measures.
 
 ## Transportation Network
