@@ -25,8 +25,8 @@ POSSIBLE_DUPLICATES_PATH = Path("metadata/healthcare_possible_duplicates.csv")
 MANUAL_VERIFICATION_PATH = Path("metadata/healthcare_manual_verification.csv")
 SUMMARY_PATH = Path("metadata/healthcare_inventory_summary.json")
 
-PROPOSED_SITE_LATITUDE = 30.660245
-PROPOSED_SITE_LONGITUDE = -97.882565
+PROPOSED_SITE_LATITUDE = 30.6521666667
+PROPOSED_SITE_LONGITUDE = -97.8797222222
 STUDY_RADIUS_MILES = 10.0
 METERS_PER_MILE = 1609.344
 HTTP_TIMEOUT = 30

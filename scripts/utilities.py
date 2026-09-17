@@ -10,8 +10,8 @@ import pandas as pd
 import requests
 from shapely.geometry import Point
 
-PROPOSED_SITE_LATITUDE = 30.660245
-PROPOSED_SITE_LONGITUDE = -97.882565
+PROPOSED_SITE_LATITUDE = 30.6521666667
+PROPOSED_SITE_LONGITUDE = -97.8797222222
 METERS_PER_MILE = 1609.344
 HTTP_TIMEOUT = 30
 RAW_INPUT_PATH = Path("data/raw/verified_utility_providers.csv")

@@ -9,7 +9,7 @@ import pandas as pd
 from shapely.geometry import Point
 
 TIGER_WILLIAMSON_ROADS_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ROADS/tl_2024_48491_roads.zip"
-LIBERTY_HILL_STUDY_POINT = (-97.882565, 30.660245)
+LIBERTY_HILL_STUDY_POINT = (-97.8797222222, 30.6521666667)
 STUDY_RADIUS_MILES = 10.0
 METERS_PER_MILE = 1609.344
 OUTPUT_GEOJSON = Path("data/processed/liberty_hill_roads.geojson")
