@@ -1,16 +1,4 @@
-# Key Sources
-
-This file is the human-readable source register for the GIS application.
-Update it every time a new phase, layer, dataset, or externally sourced feature is added.
-
-## How To Maintain This File
-
-- Add each new phase or feature under its own heading.
-- List the authoritative source URLs that feed the map, dashboard, popups, or derived metrics.
-- If a phase relies on many facility-level pages, summarize the source family here and keep the row-level detail in a companion CSV.
-- Note important limitations so the application remains evidence-based and neutral.
-
-## Phase 1: Study Context And Base Map
+## Study Context And Base Map
 
 ### Liberty Hill context statistics
 
@@ -26,7 +14,7 @@ Update it every time a new phase, layer, dataset, or externally sourced feature 
 - Used for: Leaflet basemap tile background
 - Limitations: Basemap is reference context, not an authoritative analytical layer for this study.
 
-## Phase 2: ACS Demographic Layer
+## ACS Demographic Layer
 
 ### ACS 2024 5-Year Estimates
 
@@ -61,7 +49,7 @@ Update it every time a new phase, layer, dataset, or externally sourced feature 
 - Supporting file: [metadata/acs_block_group_metadata.csv](/Users/saig/LibertyHill_MedClinic_GIS/metadata/acs_block_group_metadata.csv)
 - Used for: Field-level provenance and estimate or margin-of-error documentation
 
-## Phase 3: Healthcare Facilities And Accessibility
+## Healthcare Facilities And Accessibility
 
 ### Facility verification register
 
@@ -94,7 +82,7 @@ Update it every time a new phase, layer, dataset, or externally sourced feature 
 - Used for: Block-group nearest-facility distance fields shown in the healthcare accessibility layer
 - Limitations: Current access values are straight-line distances, not drive-time or network-travel measures.
 
-## Phase 4: Transportation Network
+## Transportation Network
 
 ### TIGER/Line 2024 Roads
 
@@ -108,7 +96,7 @@ Update it every time a new phase, layer, dataset, or externally sourced feature 
 - Supporting file: [metadata/road_network_summary.json](/Users/saig/LibertyHill_MedClinic_GIS/metadata/road_network_summary.json)
 - Used for: Summary counts of road segments, major corridors, and centerline mileage in the study area
 
-## Phase 5: Utilities
+## Utilities
 
 ### City of Liberty Hill Utilities
 

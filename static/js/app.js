@@ -4,7 +4,7 @@ let healthcareAccessibilityLayer = null;
 let roadNetworkLayer = null;
 let acsLegendControl = null;
 let currentAcsMetric = "population_density";
-let currentHealthcareAccessibilityMetric = "nearest_any_medical_miles";
+let currentHealthcareAccessibilityMetric = "nearest_urgent_care_miles";
 const healthcareTypeLayers = {};
 
 const HEALTHCARE_LAYER_NAMES = [
@@ -59,26 +59,14 @@ const ACS_METRICS = {
 };
 
 const HEALTHCARE_ACCESSIBILITY_METRICS = {
-  nearest_any_medical_miles: {
-    label: "Nearest medical facility",
-    valueSuffix: " miles",
-    bins: [0, 1, 3, 5, 10],
-    colors: ["#204b57", "#3b7d6c", "#8fb96f", "#e6c85c", "#c86a3c"],
-  },
-  nearest_primary_care_miles: {
-    label: "Nearest primary care",
-    valueSuffix: " miles",
-    bins: [0, 1, 3, 5, 10],
-    colors: ["#1f4d69", "#3a7aa1", "#7fb0c9", "#d6d29d", "#b86a3a"],
-  },
   nearest_urgent_care_miles: {
     label: "Nearest urgent care",
     valueSuffix: " miles",
     bins: [0, 1, 3, 5, 10],
     colors: ["#2a4b3f", "#4f7c5e", "#88b27d", "#d7c868", "#b9663d"],
   },
-  nearest_emergency_miles: {
-    label: "Nearest emergency department",
+  nearest_hospital_miles: {
+    label: "Nearest hospital",
     valueSuffix: " miles",
     bins: [0, 1, 3, 5, 10],
     colors: ["#25334f", "#4e648d", "#8d9fc5", "#d4c09a", "#aa5a4c"],
@@ -340,10 +328,8 @@ function buildHealthcareAccessibilityPopup(properties) {
       <strong>${properties.NAME ?? "ACS Block Group"}</strong><br>
       Healthcare access measure: ${properties.healthcare_access_measure ?? "N/A"}<br>
       Access distance band: ${properties.healthcare_access_distance_band ?? "N/A"}<br>
-      Nearest medical facility: ${formatNullableNumber(properties.nearest_any_medical_miles, (value) => `${value.toFixed(2)} miles`)}<br>
-      Nearest primary care: ${formatNullableNumber(properties.nearest_primary_care_miles, (value) => `${value.toFixed(2)} miles`)}<br>
       Nearest urgent care: ${formatNullableNumber(properties.nearest_urgent_care_miles, (value) => `${value.toFixed(2)} miles`)}<br>
-      Nearest emergency department: ${formatNullableNumber(properties.nearest_emergency_miles, (value) => `${value.toFixed(2)} miles`)}<br>
+      Nearest hospital: ${formatNullableNumber(properties.nearest_hospital_miles, (value) => `${value.toFixed(2)} miles`)}<br>
       Healthcare need score: ${formatNullableNumber(properties.healthcare_need_score, (value) => value.toFixed(1))}
     </div>
   `;
@@ -434,7 +420,9 @@ async function loadHealthcareLayers(map, layerConfig) {
   });
 
   if (!layerConfig?.available) {
-    statusElement.textContent = "Awaiting verified healthcare facility inventory.";
+    if (statusElement) {
+      statusElement.textContent = "Awaiting verified healthcare facility inventory.";
+    }
     return;
   }
 
@@ -462,7 +450,9 @@ async function loadHealthcareLayers(map, layerConfig) {
 
   setHealthcareToggleState(true);
   const summary = summarizeHealthcareFacilities(features);
-  statusElement.textContent = `Loaded ${summary.total} healthcare facilities; ${summary.withinFiveMiles} are within 5 straight-line miles of the proposed site.`;
+  if (statusElement) {
+    statusElement.textContent = `Loaded ${summary.total} healthcare facilities; ${summary.withinFiveMiles} are within 5 straight-line miles of the proposed site.`;
+  }
   upsertDashboardCard("healthcare-facilities-card", "Healthcare Facilities", formatInteger(summary.total), `${formatInteger(summary.withinFiveMiles)} within 5 straight-line miles`);
 }
 
@@ -482,7 +472,9 @@ async function loadHealthcareAccessibilityLayer(map, layerConfig) {
   setHealthcareAccessibilityToggleState(false);
 
   if (!layerConfig?.available) {
-    statusElement.textContent = "Awaiting healthcare accessibility output.";
+    if (statusElement) {
+      statusElement.textContent = "Awaiting healthcare accessibility output.";
+    }
     return;
   }
 
@@ -505,7 +497,9 @@ async function loadHealthcareAccessibilityLayer(map, layerConfig) {
 
   registerLayer("healthcare-accessibility", healthcareAccessibilityLayer);
   setHealthcareAccessibilityToggleState(true);
-  statusElement.textContent = `Loaded ${geojson.features.length} healthcare accessibility block groups.`;
+  if (statusElement) {
+    statusElement.textContent = `Loaded ${geojson.features.length} healthcare accessibility block groups.`;
+  }
   const summary = summarizeHealthcareAccessibility(geojson.features ?? []);
   upsertDashboardCard(
     "healthcare-access-card",
@@ -539,7 +533,9 @@ async function loadRoadNetworkLayer(map, layerConfig) {
   setRoadNetworkToggleState(false);
 
   if (!layerConfig?.available) {
-    statusElement.textContent = "Awaiting transportation network output.";
+    if (statusElement) {
+      statusElement.textContent = "Awaiting transportation network output.";
+    }
     return;
   }
 
@@ -563,7 +559,9 @@ async function loadRoadNetworkLayer(map, layerConfig) {
   registerLayer("road-network", roadNetworkLayer);
   setRoadNetworkToggleState(true);
   const summary = summarizeRoadNetwork(geojson.features ?? []);
-  statusElement.textContent = `Loaded ${formatInteger(summary.totalSegments)} road segments, including ${formatInteger(summary.majorSegments)} major-corridor segments.`;
+  if (statusElement) {
+    statusElement.textContent = `Loaded ${formatInteger(summary.totalSegments)} road segments, including ${formatInteger(summary.majorSegments)} major-corridor segments.`;
+  }
   upsertDashboardCard(
     "road-network-card",
     "Transportation Network",
@@ -582,7 +580,9 @@ async function loadAcsLayer(map, layerConfig) {
   if (!layerConfig?.available) {
     toggle.disabled = true;
     metricSelect.disabled = true;
-    statusElement.textContent = "Awaiting ACS download and processing.";
+    if (statusElement) {
+      statusElement.textContent = "Awaiting ACS download and processing.";
+    }
     return;
   }
 
@@ -606,7 +606,9 @@ async function loadAcsLayer(map, layerConfig) {
   registerLayer("acs-block-groups", acsLayer);
   toggle.disabled = false;
   metricSelect.disabled = false;
-  statusElement.textContent = `Loaded ${acsGeoJson.features.length} ACS block groups for the Liberty Hill study area.`;
+  if (statusElement) {
+    statusElement.textContent = `Loaded ${acsGeoJson.features.length} ACS block groups for the Liberty Hill study area.`;
+  }
   metricSelect.addEventListener("change", (event) => {
     currentAcsMetric = event.target.value;
     refreshAcsStyles(map);
@@ -655,12 +657,6 @@ function syncLayerToggles(map) {
       }
     });
   });
-}
-
-function bindMethodologyDialog() {
-  const dialog = document.getElementById("methodology-dialog");
-  document.getElementById("methodology-toggle").addEventListener("click", () => dialog.showModal());
-  document.getElementById("methodology-close").addEventListener("click", () => dialog.close());
 }
 
 function buildMap(studyConfig) {
@@ -712,7 +708,6 @@ async function bootstrapApp() {
   await loadHealthcareLayers(map, payload.layers?.healthcare_facilities);
   await loadAcsLayer(map, payload.layers?.acs_block_groups);
   await loadHealthcareAccessibilityLayer(map, payload.layers?.healthcare_accessibility);
-  bindMethodologyDialog();
 }
 
 bootstrapApp().catch((error) => {

@@ -55,27 +55,10 @@
             </select>
             <label class="control-label" for="healthcare-accessibility-select">Healthcare accessibility display</label>
             <select id="healthcare-accessibility-select" disabled>
-              <option value="nearest_any_medical_miles">Nearest medical facility</option>
-              <option value="nearest_primary_care_miles">Nearest primary care</option>
               <option value="nearest_urgent_care_miles">Nearest urgent care</option>
-              <option value="nearest_emergency_miles">Nearest emergency department</option>
+              <option value="nearest_hospital_miles">Nearest hospital</option>
             </select>
-            <p id="road-network-status" class="small-copy">Awaiting transportation network output.</p>
-            <p id="acs-status" class="small-copy">Awaiting ACS download and processing.</p>
-            <p id="healthcare-status" class="small-copy">Awaiting verified healthcare facility inventory.</p>
-            <p id="healthcare-accessibility-status" class="small-copy">Awaiting healthcare accessibility output.</p>
           </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header">
-            <h2>Methodology</h2>
-            <button id="methodology-toggle" class="secondary-button" type="button">Open</button>
-          </div>
-          <p class="small-copy">
-            The analysis will remain transparent. Each data source, derived indicator,
-            and limitation will be documented before new comparison layers are added.
-          </p>
         </div>
       </aside>
 
@@ -92,25 +75,6 @@
         </section>
       </main>
     </div>
-
-    <dialog id="methodology-dialog">
-      <div class="dialog-body">
-        <h2>Methodology</h2>
-        <p>
-          The ACS block-group workflow uses 2024 ACS 5-Year estimates joined to 2024 TIGER/Line
-          block-group boundaries. Derived percentages document the numerator and denominator used,
-          and the healthcare-need score is a transparent relative index rather than a proof of need.
-        </p>
-        <ol>
-          <li>Document each source in the metadata catalog.</li>
-          <li>Retrieve official ACS estimates and margins of error through the Census API.</li>
-          <li>Join ACS rows to 2024 TIGER/Line block-group boundaries using GEOID.</li>
-          <li>Normalize selected healthcare-need indicators to a 0 to 100 relative index.</li>
-          <li>Compare documented indicators side by side without collapsing them into a single score.</li>
-        </ol>
-        <button id="methodology-close" class="primary-button" type="button">Close</button>
-      </div>
-    </dialog>
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
