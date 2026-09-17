@@ -26,6 +26,7 @@ STUDY_RADIUS_MILES = 10.0
 METERS_PER_MILE = 1609.344
 OUTPUT_GEOJSON = Path("data/processed/liberty_hill_acs_block_groups.geojson")
 OUTPUT_CSV = Path("data/processed/liberty_hill_acs_block_groups.csv")
+CITY_BOUNDARY_GEOJSON = Path("data/processed/liberty_hill_city_boundary.geojson")
 METADATA_CSV = Path("metadata/acs_block_group_metadata.csv")
 HTTP_TIMEOUT = 60
 
@@ -382,6 +383,17 @@ def write_outputs(frame: gpd.GeoDataFrame) -> None:
     csv_frame.to_csv(OUTPUT_CSV, index=False)
 
 
+def write_city_boundary(place_frame: gpd.GeoDataFrame) -> None:
+    CITY_BOUNDARY_GEOJSON.parent.mkdir(parents=True, exist_ok=True)
+    boundary = place_frame.to_crs("EPSG:4326").copy()
+    boundary["boundary_name"] = boundary["NAMELSAD"].fillna(boundary["NAME"])
+    boundary["source"] = "TIGER/Line 2024 Texas places"
+    boundary[["GEOID", "NAME", "NAMELSAD", "boundary_name", "source", "geometry"]].to_file(
+        CITY_BOUNDARY_GEOJSON,
+        driver="GeoJSON",
+    )
+
+
 def write_metadata(variable_catalog: dict[str, dict[str, str]]) -> None:
     METADATA_CSV.parent.mkdir(parents=True, exist_ok=True)
     with METADATA_CSV.open("w", newline="", encoding="utf-8") as handle:
@@ -440,6 +452,7 @@ def main() -> None:
     processed = process_acs_data(acs_frame, block_groups, liberty_hill_place)
 
     write_outputs(processed)
+    write_city_boundary(liberty_hill_place)
     write_metadata(variable_catalog)
 
     total_downloaded = len(acs_frame)
@@ -449,6 +462,7 @@ def main() -> None:
     print(f"Retained {retained} block groups intersecting the Liberty Hill 10-mile study area.")
     print(f"{city_intersections} retained block groups intersect the Liberty Hill city boundary.")
     print(f"Wrote {OUTPUT_GEOJSON} and {OUTPUT_CSV}.")
+    print(f"Wrote city boundary layer to {CITY_BOUNDARY_GEOJSON}.")
     print(f"Wrote metadata catalog to {METADATA_CSV}.")
 
 

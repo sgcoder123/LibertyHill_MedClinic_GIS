@@ -83,5 +83,3 @@ For deployment, the active GeoJSON outputs in `data/processed/` must stay commit
 1. Run the ACS block-group pipeline after `CENSUS_API_KEY` is available
 2. Populate `data/raw/verified_healthcare_facilities.csv` from the template and run `scripts/build_healthcare_inventory.py`
 3. Add transportation and accessibility layers
-4. Add environmental constraints
-5. Extend the transparent suitability scoring workflow

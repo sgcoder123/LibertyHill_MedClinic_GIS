@@ -20,7 +20,7 @@
           <h1>Liberty Hill Medical Clinic Suitability</h1>
           <p class="lede">
             Interactive analysis of the SH 29 / US 183 area using demographics,
-            healthcare access, transportation, infrastructure, development, and constraints.
+            healthcare access, transportation, and infrastructure.
           </p>
         </div>
 
@@ -33,7 +33,7 @@
             <li><label><input type="checkbox" data-layer="study-location" checked> Proposed clinic study location</label></li>
             <li><label><input type="checkbox" data-layer="study-5" checked> 5-mile study area</label></li>
             <li><label><input type="checkbox" data-layer="study-10" checked> 10-mile study area</label></li>
-            <li><label><input type="checkbox" disabled> City boundary</label></li>
+            <li><label><input id="city-boundary-toggle" type="checkbox" data-layer="city-boundary"> City boundary</label></li>
             <li><label><input type="checkbox" disabled> ETJ</label></li>
             <li><label><input id="acs-layer-toggle" type="checkbox" data-layer="acs-block-groups"> ACS Block Groups</label></li>
             <li><label><input id="healthcare-accessibility-toggle" type="checkbox" data-layer="healthcare-accessibility"> Healthcare Accessibility</label></li>
@@ -45,9 +45,6 @@
             <li><label><input id="healthcare-specialty-toggle" type="checkbox" data-layer="healthcare-specialty" disabled> Specialty Clinics</label></li>
             <li><label><input id="healthcare-pharmacy-toggle" type="checkbox" data-layer="healthcare-pharmacy" disabled> Pharmacies</label></li>
             <li><label><input id="road-network-toggle" type="checkbox" data-layer="road-network"> Transportation Network</label></li>
-            <li><label><input type="checkbox" disabled> Development activity</label></li>
-            <li><label><input type="checkbox" disabled> Environmental constraints</label></li>
-            <li><label><input type="checkbox" disabled> Suitability score</label></li>
           </ul>
           <div class="control-stack">
             <label class="control-label" for="acs-metric-select">ACS thematic display</label>
@@ -78,8 +75,8 @@
             <button id="methodology-toggle" class="secondary-button" type="button">Open</button>
           </div>
           <p class="small-copy">
-            The final suitability model will remain transparent. Each factor, weight, normalization rule,
-            data source, and limitation will be documented before scoring is displayed.
+            The analysis will remain transparent. Each data source, derived indicator,
+            and limitation will be documented before new comparison layers are added.
           </p>
         </div>
       </aside>
@@ -105,7 +102,7 @@
           <li>Retrieve official ACS estimates and margins of error through the Census API.</li>
           <li>Join ACS rows to 2024 TIGER/Line block-group boundaries using GEOID.</li>
           <li>Normalize selected healthcare-need indicators to a 0 to 100 relative index.</li>
-          <li>Apply configurable weights later for the full suitability model.</li>
+          <li>Compare documented indicators side by side without collapsing them into a single score.</li>
         </ol>
         <button id="methodology-close" class="primary-button" type="button">Close</button>
       </div>

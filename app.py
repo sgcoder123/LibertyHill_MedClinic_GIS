@@ -67,6 +67,7 @@ ACS_BLOCK_GROUPS_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_acs_bloc
 HEALTHCARE_FACILITIES_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_healthcare_facilities.geojson"
 HEALTHCARE_ACCESSIBILITY_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_healthcare_accessibility.geojson"
 ROAD_NETWORK_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_roads.geojson"
+CITY_BOUNDARY_PATH = BASE_DIR / "data" / "processed" / "liberty_hill_city_boundary.geojson"
 
 
 def create_app() -> Flask:
@@ -100,6 +101,10 @@ def create_app() -> Flask:
                         "road_network": {
                             "available": ROAD_NETWORK_PATH.exists(),
                             "endpoint": "/api/layers/road-network",
+                        },
+                        "city_boundary": {
+                            "available": CITY_BOUNDARY_PATH.exists(),
+                            "endpoint": "/api/layers/city-boundary",
                         }
                     },
                 }
@@ -166,6 +171,21 @@ def create_app() -> Flask:
             )
 
         return (jsonify(json.loads(ROAD_NETWORK_PATH.read_text(encoding="utf-8"))), 200)
+
+    @app.get("/api/layers/city-boundary")
+    def city_boundary() -> tuple[dict, int]:
+        if not CITY_BOUNDARY_PATH.exists():
+            return (
+                jsonify(
+                    {
+                        "error": "City boundary layer is not available yet.",
+                        "expected_path": str(CITY_BOUNDARY_PATH),
+                    }
+                ),
+                404,
+            )
+
+        return (jsonify(json.loads(CITY_BOUNDARY_PATH.read_text(encoding="utf-8"))), 200)
 
     return app
 

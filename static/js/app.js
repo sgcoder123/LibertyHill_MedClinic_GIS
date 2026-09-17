@@ -2,6 +2,7 @@ const layerRegistry = {};
 let acsLayer = null;
 let healthcareAccessibilityLayer = null;
 let roadNetworkLayer = null;
+let cityBoundaryLayer = null;
 let acsLegendControl = null;
 let currentAcsMetric = "population_density";
 let currentHealthcareAccessibilityMetric = "nearest_any_medical_miles";
@@ -195,6 +196,13 @@ function setRoadNetworkToggleState(enabled) {
   }
 }
 
+function setCityBoundaryToggleState(enabled) {
+  const toggle = document.getElementById("city-boundary-toggle");
+  if (toggle) {
+    toggle.disabled = !enabled;
+  }
+}
+
 function syncHealthcareMasterToggleState() {
   const masterToggle = document.getElementById("healthcare-all-toggle");
   if (!masterToggle || masterToggle.disabled) {
@@ -358,6 +366,16 @@ function buildRoadPopup(properties) {
       Major corridor: ${properties.is_major_corridor ? "Yes" : "No"}<br>
       Segment length: ${formatNullableNumber(properties.segment_length_miles, (value) => `${value.toFixed(2)} miles`)}<br>
       Source: TIGER/Line 2024 Williamson County roads
+    </div>
+  `;
+}
+
+function buildCityBoundaryPopup(properties) {
+  return `
+    <div>
+      <strong>${properties.boundary_name ?? properties.NAMELSAD ?? properties.NAME ?? "City boundary"}</strong><br>
+      GEOID: ${properties.GEOID ?? "N/A"}<br>
+      Source: ${properties.source ?? "TIGER/Line 2024 Texas places"}
     </div>
   `;
 }
@@ -575,6 +593,39 @@ async function loadRoadNetworkLayer(map, layerConfig) {
   }
 }
 
+async function loadCityBoundaryLayer(map, layerConfig) {
+  const toggle = document.getElementById("city-boundary-toggle");
+  setCityBoundaryToggleState(false);
+
+  if (!layerConfig?.available) {
+    return;
+  }
+
+  const response = await fetch(layerConfig.endpoint);
+  if (!response.ok) {
+    throw new Error("City boundary layer could not be loaded");
+  }
+
+  const geojson = await response.json();
+  cityBoundaryLayer = L.geoJSON(geojson, {
+    style: {
+      color: "#0f766e",
+      weight: 3,
+      opacity: 0.95,
+      fillOpacity: 0.03,
+    },
+    onEachFeature: (feature, layer) => {
+      layer.bindPopup(buildCityBoundaryPopup(feature.properties));
+    },
+  });
+
+  registerLayer("city-boundary", cityBoundaryLayer);
+  setCityBoundaryToggleState(true);
+  if (toggle.checked) {
+    cityBoundaryLayer.addTo(map);
+  }
+}
+
 async function loadAcsLayer(map, layerConfig) {
   const statusElement = document.getElementById("acs-status");
   const toggle = document.getElementById("acs-layer-toggle");
@@ -708,6 +759,7 @@ async function bootstrapApp() {
   const payload = await response.json();
   buildDashboard(payload.quickfacts);
   const map = buildMap(payload.study_config);
+  await loadCityBoundaryLayer(map, payload.layers?.city_boundary);
   await loadRoadNetworkLayer(map, payload.layers?.road_network);
   await loadHealthcareLayers(map, payload.layers?.healthcare_facilities);
   await loadAcsLayer(map, payload.layers?.acs_block_groups);
