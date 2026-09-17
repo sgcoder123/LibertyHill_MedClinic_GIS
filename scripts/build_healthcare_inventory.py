@@ -35,6 +35,7 @@ PROPOSED_SITE_LONGITUDE = -97.8797222222
 STUDY_RADIUS_MILES = 10.0
 METERS_PER_MILE = 1609.344
 HTTP_TIMEOUT = 30
+OSRM_TABLE_URL = "https://router.project-osrm.org/table/v1/driving/"
 
 STANDARD_TYPES = {
     "primary_care": "primary_care",
@@ -322,6 +323,73 @@ def build_geodataframe(frame: pd.DataFrame) -> gpd.GeoDataFrame:
     return geodata
 
 
+def build_osrm_coordinate_string(coordinates: list[tuple[float, float]]) -> str:
+    return ";".join(f"{longitude:.6f},{latitude:.6f}" for longitude, latitude in coordinates)
+
+
+def fetch_route_matrix(
+    session: requests.Session,
+    sources: list[tuple[float, float]],
+    destinations: list[tuple[float, float]],
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    if not sources or not destinations:
+        return None, None
+
+    coordinates = [*sources, *destinations]
+    source_indexes = ";".join(str(index) for index in range(len(sources)))
+    destination_indexes = ";".join(str(index) for index in range(len(sources), len(coordinates)))
+    response = session.get(
+        f"{OSRM_TABLE_URL}{build_osrm_coordinate_string(coordinates)}",
+        params={
+            "annotations": "distance,duration",
+            "sources": source_indexes,
+            "destinations": destination_indexes,
+        },
+        timeout=HTTP_TIMEOUT,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    distances = payload.get("distances")
+    durations = payload.get("durations")
+    if distances is None or durations is None:
+        return None, None
+
+    distance_matrix = np.array(distances, dtype="float64") / METERS_PER_MILE
+    duration_matrix = np.array(durations, dtype="float64") / 60.0
+    distance_matrix[~np.isfinite(distance_matrix)] = np.nan
+    duration_matrix[~np.isfinite(duration_matrix)] = np.nan
+    return distance_matrix, duration_matrix
+
+
+def assign_route_metrics(geodata: gpd.GeoDataFrame) -> tuple[gpd.GeoDataFrame, bool]:
+    if geodata.empty:
+        geodata["drive_distance_miles"] = pd.Series(dtype="float64")
+        geodata["drive_time_minutes"] = pd.Series(dtype="float64")
+        return geodata, False
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": "LibertyHillMedicalClinicGIS/1.0"})
+    source = [(PROPOSED_SITE_LONGITUDE, PROPOSED_SITE_LATITUDE)]
+    destinations = list(zip(geodata.geometry.x, geodata.geometry.y, strict=False))
+
+    try:
+        distance_matrix, duration_matrix = fetch_route_matrix(session, source, destinations)
+    except requests.RequestException:
+        geodata["drive_distance_miles"] = geodata["distance_from_proposed_site_miles"]
+        geodata["drive_time_minutes"] = np.nan
+        return geodata, False
+
+    if distance_matrix is None or duration_matrix is None:
+        geodata["drive_distance_miles"] = geodata["distance_from_proposed_site_miles"]
+        geodata["drive_time_minutes"] = np.nan
+        return geodata, False
+
+    geodata["drive_distance_miles"] = distance_matrix[0]
+    geodata["drive_time_minutes"] = duration_matrix[0]
+    geodata["drive_distance_miles"] = geodata["drive_distance_miles"].fillna(geodata["distance_from_proposed_site_miles"])
+    return geodata, True
+
+
 def calculate_site_distances(geodata: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     projected = geodata.to_crs("EPSG:5070")
     proposed = gpd.GeoSeries([Point(PROPOSED_SITE_LONGITUDE, PROPOSED_SITE_LATITUDE)], crs="EPSG:4326").to_crs("EPSG:5070").iloc[0]
@@ -332,7 +400,8 @@ def calculate_site_distances(geodata: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def filter_to_study_radius(geodata: gpd.GeoDataFrame) -> tuple[gpd.GeoDataFrame, pd.DataFrame]:
-    include_mask = geodata["distance_from_proposed_site_miles"] <= STUDY_RADIUS_MILES
+    comparison_distance = geodata["drive_distance_miles"].fillna(geodata["distance_from_proposed_site_miles"])
+    include_mask = comparison_distance <= STUDY_RADIUS_MILES
     include_mask = include_mask | geodata["facility_id"].isin(ALWAYS_INCLUDE_FACILITY_IDS)
     within_radius = geodata.loc[include_mask].copy()
     excluded = geodata.loc[~include_mask].copy()
@@ -395,12 +464,46 @@ def distance_to_nearest(points: gpd.GeoSeries, facilities: gpd.GeoDataFrame) -> 
     return points.apply(lambda geometry: projected.geometry.distance(geometry).min() / METERS_PER_MILE)
 
 
-def build_accessibility_outputs(geodata: gpd.GeoDataFrame) -> dict[str, int] | None:
+def route_distance_to_nearest(
+    origins: list[tuple[float, float]],
+    facilities: gpd.GeoDataFrame,
+) -> tuple[pd.Series, pd.Series, bool]:
+    origin_index = pd.RangeIndex(len(origins))
+    if not origins or facilities.empty:
+        nan_series = pd.Series(np.nan, index=origin_index, dtype="float64")
+        return nan_series, nan_series, False
+
+    session = requests.Session()
+    session.headers.update({"User-Agent": "LibertyHillMedicalClinicGIS/1.0"})
+    destinations = list(zip(facilities.geometry.x, facilities.geometry.y, strict=False))
+
+    try:
+        distance_matrix, duration_matrix = fetch_route_matrix(session, origins, destinations)
+    except requests.RequestException:
+        nan_series = pd.Series(np.nan, index=origin_index, dtype="float64")
+        return nan_series, nan_series, False
+
+    if distance_matrix is None or duration_matrix is None:
+        nan_series = pd.Series(np.nan, index=origin_index, dtype="float64")
+        return nan_series, nan_series, False
+
+    nearest_distances = np.nanmin(distance_matrix, axis=1)
+    nearest_durations = np.nanmin(duration_matrix, axis=1)
+    return (
+        pd.Series(nearest_distances, index=origin_index, dtype="float64"),
+        pd.Series(nearest_durations, index=origin_index, dtype="float64"),
+        True,
+    )
+
+
+def build_accessibility_outputs(geodata: gpd.GeoDataFrame) -> dict[str, int | bool] | None:
     if not ACS_BLOCK_GROUPS_PATH.exists():
         return None
 
     access = gpd.read_file(ACS_BLOCK_GROUPS_PATH).to_crs("EPSG:4326")
     projected_points = access.to_crs("EPSG:5070").representative_point()
+    origin_points = access.representative_point()
+    origin_coordinates = list(zip(origin_points.x, origin_points.y, strict=False))
 
     medical = geodata.loc[geodata["facility_type"] != "pharmacy"].copy()
     primary = geodata.loc[geodata["facility_type"] == "primary_care"].copy()
@@ -409,15 +512,22 @@ def build_accessibility_outputs(geodata: gpd.GeoDataFrame) -> dict[str, int] | N
     emergency = geodata.loc[geodata["facility_type"] == "emergency_department"].copy()
 
     access["nearest_any_medical_miles"] = distance_to_nearest(projected_points, medical)
-    access["nearest_primary_care_miles"] = distance_to_nearest(projected_points, primary)
-    access["nearest_urgent_care_miles"] = distance_to_nearest(projected_points, urgent)
-    access["nearest_hospital_miles"] = distance_to_nearest(projected_points, hospital)
-    access["nearest_emergency_miles"] = distance_to_nearest(projected_points, emergency)
-    access["nearest_primary_care_minutes"] = np.nan
-    access["nearest_urgent_care_minutes"] = np.nan
-    access["nearest_hospital_minutes"] = np.nan
-    access["nearest_emergency_minutes"] = np.nan
-    access["healthcare_access_measure"] = "Straight-line distance"
+    route_primary_miles, route_primary_minutes, primary_routed = route_distance_to_nearest(origin_coordinates, primary)
+    route_urgent_miles, route_urgent_minutes, urgent_routed = route_distance_to_nearest(origin_coordinates, urgent)
+    route_hospital_miles, route_hospital_minutes, hospital_routed = route_distance_to_nearest(origin_coordinates, hospital)
+    route_emergency_miles, route_emergency_minutes, emergency_routed = route_distance_to_nearest(origin_coordinates, emergency)
+    route_any_miles, route_any_minutes, any_routed = route_distance_to_nearest(origin_coordinates, medical)
+
+    access["nearest_primary_care_miles"] = route_primary_miles.fillna(distance_to_nearest(projected_points, primary))
+    access["nearest_urgent_care_miles"] = route_urgent_miles.fillna(distance_to_nearest(projected_points, urgent))
+    access["nearest_hospital_miles"] = route_hospital_miles.fillna(distance_to_nearest(projected_points, hospital))
+    access["nearest_emergency_miles"] = route_emergency_miles.fillna(distance_to_nearest(projected_points, emergency))
+    access["nearest_any_medical_miles"] = route_any_miles.fillna(access["nearest_any_medical_miles"])
+    access["nearest_primary_care_minutes"] = route_primary_minutes
+    access["nearest_urgent_care_minutes"] = route_urgent_minutes
+    access["nearest_hospital_minutes"] = route_hospital_minutes
+    access["nearest_emergency_minutes"] = route_emergency_minutes
+    access["healthcare_access_measure"] = "Driving route distance" if any_routed else "Straight-line distance"
     access["healthcare_access_distance_band"] = pd.cut(
         access["nearest_any_medical_miles"],
         bins=[-np.inf, 1, 3, 5, 10, np.inf],
@@ -427,11 +537,15 @@ def build_accessibility_outputs(geodata: gpd.GeoDataFrame) -> dict[str, int] | N
     ACCESSIBILITY_GEOJSON.parent.mkdir(parents=True, exist_ok=True)
     access.to_file(ACCESSIBILITY_GEOJSON, driver="GeoJSON")
     access.drop(columns="geometry").to_csv(ACCESSIBILITY_CSV, index=False)
-    return {"block_groups": len(access)}
+    return {
+        "block_groups": len(access),
+        "route_distance_available": bool(any_routed or primary_routed or urgent_routed or hospital_routed or emergency_routed),
+        "route_time_available": bool(any_routed or primary_routed or urgent_routed or hospital_routed or emergency_routed),
+    }
 
 
 def build_summary(raw_count: int, geodata: gpd.GeoDataFrame, excluded_by_radius: pd.DataFrame, removed_duplicates: pd.DataFrame, possible_duplicates: pd.DataFrame, manual_verification: pd.DataFrame, accessibility_summary: dict[str, int] | None) -> dict[str, object]:
-    distances = geodata["distance_from_proposed_site_miles"]
+    distances = geodata["drive_distance_miles"].fillna(geodata["distance_from_proposed_site_miles"])
     return {
         "date_built": date.today().isoformat(),
         "study_radius_miles": STUDY_RADIUS_MILES,
@@ -449,7 +563,8 @@ def build_summary(raw_count: int, geodata: gpd.GeoDataFrame, excluded_by_radius:
         "removed_exact_duplicates": int(len(removed_duplicates)),
         "possible_duplicates_flagged": int(len(possible_duplicates)),
         "manual_verification_required": int(len(manual_verification)),
-        "drive_time_available": False,
+        "drive_time_available": bool(geodata["drive_time_minutes"].notna().any()),
+        "drive_distance_available": bool(geodata["drive_distance_miles"].notna().any()),
         "accessibility_summary": accessibility_summary,
     }
 
@@ -472,6 +587,7 @@ def main() -> None:
     valid_rows = cleaned.loc[cleaned["latitude"].notna() & cleaned["longitude"].notna() & cleaned["facility_type"].notna()].copy()
     geodata = build_geodataframe(valid_rows)
     geodata = calculate_site_distances(geodata)
+    geodata, _ = assign_route_metrics(geodata)
     geodata, excluded_by_radius = filter_to_study_radius(geodata)
 
     write_facility_outputs(geodata)
@@ -485,7 +601,7 @@ def main() -> None:
 
     print(f"Processed {len(inventory)} raw healthcare facility records.")
     print(f"Exported {len(geodata)} facilities to {OUTPUT_GEOJSON} and {OUTPUT_CSV}.")
-    print(f"Excluded {len(excluded_by_radius)} facilities beyond {STUDY_RADIUS_MILES} straight-line miles from the proposed site.")
+    print(f"Excluded {len(excluded_by_radius)} facilities beyond {STUDY_RADIUS_MILES} route miles from the proposed site.")
     print(f"Flagged {len(possible_duplicates)} possible duplicates in {POSSIBLE_DUPLICATES_PATH}.")
     print(f"Logged {len(manual_verification)} facilities requiring manual verification in {MANUAL_VERIFICATION_PATH}.")
     if validation_notes:

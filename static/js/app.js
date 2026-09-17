@@ -309,6 +309,8 @@ function buildAcsPopup(properties) {
 function buildHealthcarePopup(properties) {
   const sourceLink = properties.source_url ? `<a href="${properties.source_url}" target="_blank" rel="noopener noreferrer">Official source</a>` : "N/A";
   const websiteLink = properties.website ? `<a href="${properties.website}" target="_blank" rel="noopener noreferrer">Website</a>` : "N/A";
+  const distanceLabel = Number.isFinite(Number(properties.drive_distance_miles)) ? "Driving distance from proposed clinic" : "Distance from proposed clinic";
+  const timeLabel = Number.isFinite(Number(properties.drive_time_minutes)) ? "Estimated drive time" : "Drive time";
   return `
     <div>
       <strong>${properties.facility_name ?? "Healthcare facility"}</strong><br>
@@ -316,8 +318,8 @@ function buildHealthcarePopup(properties) {
       Address: ${properties.full_address ?? "N/A"}<br>
       Organization: ${properties.organization ?? "N/A"}<br>
       Services: ${properties.services ?? "N/A"}<br>
-      Straight-line distance from proposed clinic: ${formatNullableNumber(properties.distance_from_proposed_site_miles, (value) => `${value.toFixed(2)} miles`)}<br>
-      Drive time: ${formatNullableNumber(properties.drive_time_minutes, (value) => `${value.toFixed(1)} minutes`)}<br>
+      ${distanceLabel}: ${formatNullableNumber(properties.drive_distance_miles ?? properties.distance_from_proposed_site_miles, (value) => `${value.toFixed(2)} miles`)}<br>
+      ${timeLabel}: ${formatNullableNumber(properties.drive_time_minutes, (value) => `${value.toFixed(1)} minutes`)}<br>
       Current status: ${properties.current_status ?? "N/A"}<br>
       Verification date: ${properties.verification_date ?? "N/A"}<br>
       Source: ${sourceLink}<br>
@@ -332,8 +334,8 @@ function buildHealthcareAccessibilityPopup(properties) {
       <strong>${properties.NAME ?? "ACS Block Group"}</strong><br>
       Healthcare access measure: ${properties.healthcare_access_measure ?? "N/A"}<br>
       Access distance band: ${properties.healthcare_access_distance_band ?? "N/A"}<br>
-      Nearest urgent care: ${formatNullableNumber(properties.nearest_urgent_care_miles, (value) => `${value.toFixed(2)} miles`)}<br>
-      Nearest hospital: ${formatNullableNumber(properties.nearest_hospital_miles, (value) => `${value.toFixed(2)} miles`)}<br>
+      Nearest urgent care: ${formatNullableNumber(properties.nearest_urgent_care_miles, (value) => `${value.toFixed(2)} miles by route`)}<br>
+      Nearest hospital: ${formatNullableNumber(properties.nearest_hospital_miles, (value) => `${value.toFixed(2)} miles by route`)}<br>
       Healthcare need score: ${formatNullableNumber(properties.healthcare_need_score, (value) => value.toFixed(1))}
     </div>
   `;
@@ -399,7 +401,12 @@ function styleRoadFeature(feature) {
 
 function summarizeHealthcareFacilities(features) {
   const total = features.length;
-  const withinFiveMiles = features.filter((feature) => Number(feature.properties.distance_from_proposed_site_miles) <= 5).length;
+  const withinFiveMiles = features.filter((feature) => {
+    const routeDistance = Number(feature.properties.drive_distance_miles);
+    const fallbackDistance = Number(feature.properties.distance_from_proposed_site_miles);
+    const comparisonDistance = Number.isFinite(routeDistance) ? routeDistance : fallbackDistance;
+    return Number.isFinite(comparisonDistance) && comparisonDistance <= 5;
+  }).length;
   const countsByType = Object.keys(HEALTHCARE_TYPES).reduce((accumulator, key) => {
     accumulator[key] = 0;
     return accumulator;
@@ -455,7 +462,7 @@ async function loadHealthcareLayers(map, layerConfig) {
   setHealthcareToggleState(true);
   const summary = summarizeHealthcareFacilities(features);
   if (statusElement) {
-    statusElement.textContent = `Loaded ${summary.total} healthcare facilities; ${summary.withinFiveMiles} are within 5 straight-line miles of the proposed site.`;
+    statusElement.textContent = `Loaded ${summary.total} healthcare facilities; ${summary.withinFiveMiles} are within 5 route miles of the proposed site.`;
   }
 }
 

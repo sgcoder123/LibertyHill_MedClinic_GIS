@@ -82,8 +82,9 @@
 
 - Derived from: [data/processed/liberty_hill_healthcare_facilities.geojson](/Users/saig/LibertyHill_MedClinic_GIS/data/processed/liberty_hill_healthcare_facilities.geojson) and [data/processed/liberty_hill_acs_block_groups.geojson](/Users/saig/LibertyHill_MedClinic_GIS/data/processed/liberty_hill_acs_block_groups.geojson)
 - Used for: Block-group nearest-facility distance fields shown in the healthcare accessibility layer
+- Routing service: OSRM public routing API, https://router.project-osrm.org/
 - Scope note: Two named hospital records may remain in the facility and accessibility outputs for regional comparison even when they fall beyond the default 10-mile study radius.
-- Limitations: Current access values are straight-line distances, not drive-time or network-travel measures.
+- Limitations: Route distances and times depend on the public OSRM road network and service availability; the script falls back to straight-line distance when routed results are unavailable.
 
 ## Transportation Network
 
